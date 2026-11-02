@@ -26,3 +26,6 @@ However, storing the aggregated values in trips makes dashboard queries simpler.
 Not initially. vehicles.driver_id represents the current assignment, while trips.driver_id preserves historical trip assignments.
 
 Ignoring for NOW : A separate assignment table would be useful in a more mature fleet platform, but isn't necessary here.
+
+5. We'll be using Mapbox for fleet tracking and visualization. 
+- mapbox.com is a provider of custom online maps which provides APIs for geocoding, routing, and displaying maps. We'll be using it for our fleet tracking and visualization.
