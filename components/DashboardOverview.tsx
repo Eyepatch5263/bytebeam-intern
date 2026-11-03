@@ -1,11 +1,10 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { useFleetVehicle, type FleetVehicle } from "@/app/hooks/useFleetVehicle";
 import FleetMap from "@/components/FleetMap";
+import VehicleDetailDrawer from "@/components/VehicleDetailDrawer";
 
 interface DashboardOverviewProps {
   user?: User | null | {
@@ -26,6 +25,19 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "vehicles" | "trips" | "alerts">("overview");
   const [vehicleFilter, setVehicleFilter] = useState<"all" | "moving" | "idle" | "offline">("all");
   const [selectedVehicle, setSelectedVehicle] = useState<FleetVehicle | null>(null);
+
+  // Auto-select vehicle from URL query (?vehicle=id) e.g. when redirected from /vehicles
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const vehicleId = params.get("vehicle");
+    if (vehicleId && fleetData?.vehicles?.length) {
+      const target = fleetData.vehicles.find((v) => v.id === vehicleId);
+      if (target) {
+        setSelectedVehicle(target);
+      }
+    }
+  }, [fleetData?.vehicles]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -243,7 +255,7 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
 
               {/* Vehicles */}
               <button
-                onClick={() => setActiveTab("vehicles")}
+                onClick={() => router.push("/vehicles")}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                   activeTab === "vehicles"
                     ? "bg-[#eaf4f0] text-[#11382b] font-semibold"
@@ -563,8 +575,34 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
 
                 {/* Alert list */}
                 <div className="mt-4 divide-y divide-gray-100">
-                  {alerts.slice(0, 3).map((alert) => (
-                    <div key={alert.id} className="py-3 flex items-start gap-3">
+                  {alerts.slice(0, 3).map((alert) => {
+                    const matchingVehicle =
+                      vehicles.find((v) => v.id === alert.vehicle_id || v.registration_number === alert.vehicle?.registration_number) ||
+                      (alert.vehicle ? {
+                        id: alert.vehicle_id || "v-" + alert.id,
+                        registration_number: alert.vehicle.registration_number,
+                        manufacturer: alert.vehicle.model?.split(" ")[0] || "Fleet",
+                        model: alert.vehicle.model || "Vehicle",
+                        vehicle_type: "Commercial Vehicle",
+                        status: alert.alert_type === "overspeeding" ? "moving" : "idle",
+                        current_speed: alert.alert_type === "overspeeding" ? 72 : 0,
+                        fuel_level: 14,
+                        battery_level: 80,
+                        ignition_on: alert.alert_type === "overspeeding",
+                        latitude: 12.9716,
+                        longitude: 77.5946,
+                        last_seen_at: new Date().toISOString(),
+                      } as FleetVehicle : null);
+
+                    return (
+                      <div
+                        key={alert.id}
+                        onClick={() => {
+                          if (matchingVehicle) setSelectedVehicle(matchingVehicle);
+                        }}
+                        title="Click to view vehicle operations details"
+                        className="py-3 flex items-start gap-3 hover:bg-gray-50/80 -mx-2 px-2 rounded-lg transition-colors cursor-pointer group"
+                      >
                       {/* Icon */}
                       <div
                         className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
@@ -607,7 +645,8 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
                         </p>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -706,7 +745,36 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
                           : "bg-amber-50 text-amber-700 border-amber-200/60";
 
                     return (
-                      <tr key={trip.id} className="hover:bg-gray-50/60 transition-colors">
+                      <tr
+                        key={trip.id}
+                        onClick={() => {
+                          const tripVehicleId = (trip as { vehicle_id?: string }).vehicle_id;
+                          const matchingVehicle =
+                            vehicles.find((v) => v.id === tripVehicleId || v.registration_number === trip.vehicle?.registration_number) ||
+                            (trip.vehicle ? {
+                              id: tripVehicleId || "trip-v-" + trip.id,
+                              registration_number: trip.vehicle.registration_number,
+                              manufacturer: trip.vehicle.model?.split(" ")[0] || "Fleet",
+                              model: trip.vehicle.model || "Vehicle",
+                              vehicle_type: trip.vehicle.vehicle_type || "Commercial Vehicle",
+                              status: trip.status === "ongoing" ? "moving" : "idle",
+                              current_speed: trip.average_speed || 40,
+                              fuel_level: 65,
+                              battery_level: 85,
+                              ignition_on: trip.status === "ongoing",
+                              latitude: 12.9716,
+                              longitude: 77.5946,
+                              last_seen_at: new Date().toISOString(),
+                              driver: trip.driver,
+                            } as FleetVehicle : null);
+
+                          if (matchingVehicle) {
+                            setSelectedVehicle(matchingVehicle);
+                          }
+                        }}
+                        title="Click to inspect vehicle operational diagnostics"
+                        className="hover:bg-gray-50/80 transition-colors cursor-pointer group"
+                      >
                         {/* Vehicle */}
                         <td className="py-3">
                           <div className="flex items-center gap-2.5">
@@ -766,6 +834,15 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
           </div>
         </main>
       </div>
+
+      {/* Vehicle Detail Slide-over Drawer for Operations Manager */}
+      <VehicleDetailDrawer
+        vehicle={selectedVehicle}
+        onClose={() => setSelectedVehicle(null)}
+        onViewOnMap={(v) => {
+          setSelectedVehicle(v);
+        }}
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { MAPBOX_ACCESS_TOKEN, BENGALURU_CENTER, DEFAULT_ZOOM, MAPBOX_STYLE } from "@/utils/mapbox";
 import { useVehicleRoute } from "@/app/hooks/useVehicleRoute";
 import type { FleetVehicle } from "@/app/hooks/useFleetVehicle";
+import { renderVehiclePopupHTML } from "@/components/map/VehiclePopup";
 
 interface FleetMapProps {
   vehicles?: FleetVehicle[];
@@ -104,6 +105,22 @@ export default function FleetMap({
     }
   }, [routeGeoJSON]);
 
+  // Center & smooth flyTo selected vehicle
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !selectedVehicleId || !isLoaded) return;
+
+    const target = vehicles.find((v) => v.id === selectedVehicleId);
+    if (target && target.longitude && target.latitude) {
+      map.flyTo({
+        center: [target.longitude, target.latitude],
+        zoom: 13.5,
+        speed: 1.2,
+        essential: true,
+      });
+    }
+  }, [selectedVehicleId, isLoaded, vehicles]);
+
   // Update Waypoint Markers and Vehicle Markers when Map is loaded or data changes
   useEffect(() => {
     const map = mapRef.current;
@@ -116,10 +133,13 @@ export default function FleetMap({
     // Helper to create HTML marker element
     const createMarkerEl = (
       type: "origin" | "midpoint" | "destination" | "moving" | "parked" | "offline",
-      label?: string
+      label?: string,
+      isSelected?: boolean
     ) => {
       const el = document.createElement("div");
-      el.className = "flex items-center justify-center cursor-pointer transition-transform hover:scale-110";
+      el.className = `flex items-center justify-center cursor-pointer transition-transform hover:scale-110 ${
+        isSelected ? "scale-115 z-30" : ""
+      }`;
 
       if (type === "origin") {
         el.innerHTML = `
@@ -145,8 +165,9 @@ export default function FleetMap({
       } else {
         // Vehicle markers
         const color = type === "moving" ? "#10b981" : type === "parked" ? "#f59e0b" : "#ef4444";
+        const ring = isSelected ? "ring-3 ring-[#11382b] ring-offset-1" : "";
         el.innerHTML = `
-          <div class="flex items-center gap-1 bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-md border border-gray-200/80 text-[10px] font-semibold text-gray-800">
+          <div class="flex items-center gap-1.5 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-md border border-gray-200/90 text-[10px] font-semibold text-gray-800 ${ring}">
             <span class="w-2 h-2 rounded-full" style="background-color: ${color};"></span>
             <span>${label || "Vehicle"}</span>
           </div>
@@ -187,7 +208,6 @@ export default function FleetMap({
       let lat = vehicle.latitude;
 
       if (!lng || !lat || lng < 75 || lng > 80 || lat < 11 || lat > 15) {
-        // Scatter around Bengaluru coordinates
         const scatterOffsets = [
           [77.604, 12.971],
           [77.625, 12.935],
@@ -203,33 +223,29 @@ export default function FleetMap({
         lat = offset[1] + (Math.cos(idx) * 0.015);
       }
 
+      const isSelected = selectedVehicleId === vehicle.id;
       const markerType = vehicle.status === "moving" ? "moving" : vehicle.status === "idle" ? "parked" : "offline";
-      const vehicleMarkerEl = createMarkerEl(markerType, vehicle.registration_number.slice(0, 10));
+      const vehicleMarkerEl = createMarkerEl(markerType, vehicle.registration_number.slice(0, 10), isSelected);
 
-      const popupHtml = `
-        <div class="p-1 font-sans">
-          <div class="flex items-center justify-between gap-3 border-b pb-1 mb-1">
-            <span class="font-bold text-xs text-gray-900">${vehicle.registration_number}</span>
-            <span class="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded ${
-              vehicle.status === "moving"
-                ? "bg-emerald-50 text-emerald-700"
-                : vehicle.status === "idle"
-                ? "bg-amber-50 text-amber-700"
-                : "bg-red-50 text-red-700"
-            }">${vehicle.status}</span>
-          </div>
-          <div class="text-[11px] text-gray-600">${vehicle.manufacturer} ${vehicle.model}</div>
-          <div class="text-[10px] text-gray-500 mt-0.5">Driver: ${vehicle.driver?.full_name || "Unassigned"}</div>
-          <div class="flex items-center justify-between mt-2 pt-1 border-t text-[10px] font-mono text-gray-600">
-            <span>Speed: ${vehicle.current_speed || 0} km/h</span>
-            <span>Fuel: ${vehicle.fuel_level ? vehicle.fuel_level + "%" : vehicle.battery_level ? vehicle.battery_level + "% (EV)" : "N/A"}</span>
-          </div>
-        </div>
-      `;
+      const popup = new mapboxgl.Popup({ offset: 14 }).setHTML(renderVehiclePopupHTML(vehicle));
+
+      // When popup opens, attach click listener to the inspection button
+      popup.on("open", () => {
+        const popupEl = popup.getElement();
+        if (popupEl) {
+          const btn = popupEl.querySelector<HTMLButtonElement>(".vehicle-inspect-btn");
+          if (btn) {
+            btn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              if (onSelectVehicle) onSelectVehicle(vehicle);
+            });
+          }
+        }
+      });
 
       const vehicleMarker = new mapboxgl.Marker({ element: vehicleMarkerEl })
         .setLngLat([lng, lat])
-        .setPopup(new mapboxgl.Popup({ offset: 12 }).setHTML(popupHtml))
+        .setPopup(popup)
         .addTo(map);
 
       vehicleMarkerEl.addEventListener("click", () => {
@@ -238,7 +254,7 @@ export default function FleetMap({
 
       markersRef.current.push(vehicleMarker);
     });
-  }, [isLoaded, vehicles, origin, midPoint, destination, onSelectVehicle]);
+  }, [isLoaded, vehicles, origin, midPoint, destination, selectedVehicleId, onSelectVehicle]);
 
   // Zoom handlers
   const handleZoomIn = () => {
