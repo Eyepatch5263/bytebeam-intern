@@ -122,18 +122,19 @@ export async function GET(request: Request) {
     const completedCount = enrichedTrips.filter((t) => t.status === "completed").length;
     const totalCount = enrichedTrips.length;
 
-    const totalDistance = enrichedTrips
-      .slice(0, 42)
-      .reduce((sum, t) => sum + t.distance_km, 0);
+    const totalDistance = enrichedTrips.reduce((sum, t) => sum + (t.distance_km || 0), 0);
+    const totalDuration = enrichedTrips.reduce((sum, t) => sum + (t.duration_min || 0), 0);
+    const avgDuration = totalCount > 0 ? Math.round(totalDuration / totalCount) : 0;
+    const distinctVehicles = new Set(enrichedTrips.map((t) => t.vehicle_id).filter(Boolean));
 
     const metrics = {
-      tripsToday: Math.min(42, totalCount) || 42,
-      totalVehiclesCount: 20,
-      distanceCoveredKm: Math.round(totalDistance) || 1248,
-      avgTripDurationMin: 46,
-      activeTripsCount: inProgressCount || 4,
-      attentionCount: attentionCount || 3,
-      completedCount: completedCount || 35,
+      tripsToday: totalCount,
+      totalVehiclesCount: distinctVehicles.size || 20,
+      distanceCoveredKm: Math.round(totalDistance),
+      avgTripDurationMin: avgDuration || 45,
+      activeTripsCount: inProgressCount,
+      attentionCount: attentionCount,
+      completedCount: completedCount,
       totalTrips: totalCount,
     };
 

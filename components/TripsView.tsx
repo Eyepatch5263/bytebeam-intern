@@ -50,14 +50,14 @@ export default function TripsView() {
 
   const [trips, setTrips] = useState<TripItem[]>([]);
   const [metrics, setMetrics] = useState({
-    tripsToday: 42,
-    totalVehiclesCount: 20,
-    distanceCoveredKm: 1248,
-    avgTripDurationMin: 46,
-    activeTripsCount: 4,
-    attentionCount: 3,
-    completedCount: 35,
-    totalTrips: 42,
+    tripsToday: 0,
+    totalVehiclesCount: 0,
+    distanceCoveredKm: 0,
+    avgTripDurationMin: 0,
+    activeTripsCount: 0,
+    attentionCount: 0,
+    completedCount: 0,
+    totalTrips: 0,
   });
 
   const [statusFilter, setStatusFilter] = useState<"all" | "in_progress" | "completed" | "attention">("all");
@@ -66,199 +66,13 @@ export default function TripsView() {
   const [inspectVehicle, setInspectVehicle] = useState<FleetVehicle | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [lastSyncSeconds, setLastSyncSeconds] = useState(28);
+  const [lastSyncSeconds, setLastSyncSeconds] = useState(0);
 
   const pageSize = 6;
 
-  // Fallback initial trips data matching user reference screenshot
-  const initialFallbackTrips: TripItem[] = useMemo(
-    () => [
-      {
-        id: "t1",
-        trip_number: "TRIP-01",
-        status: "in_progress",
-        date_day: "02",
-        date_month: "NOV",
-        start_location: "Koramangala",
-        end_location: "Whitefield",
-        distance_km: 28.4,
-        duration_min: 52,
-        average_speed: 39,
-        halt_time_min: 6,
-        started_at: new Date(Date.now() - 52 * 60000).toISOString(),
-        start_time: "11:16 AM",
-        last_seen_time: "12:08 PM",
-        vehicle: {
-          registration_number: "KA 03 MN 4821",
-          model: "Tata Ace",
-          vehicle_type: "Delivery Van",
-        },
-        driver: {
-          full_name: "Rohan Kumar",
-          phone: "+91 98234 11201",
-        },
-        timeline: [
-          { id: "e1", title: "Trip started", location: "Koramangala depot", time: "11:16", status: "started" },
-          { id: "e2", title: "Stopped · 6 min", location: "Domlur junction", time: "11:42", status: "halt" },
-          { id: "e3", title: "Current position", location: "Indiranagar", time: "12:08", status: "active" },
-        ],
-      },
-      {
-        id: "t2",
-        trip_number: "TRIP-02",
-        status: "in_progress",
-        date_day: "02",
-        date_month: "NOV",
-        start_location: "Hebbal",
-        end_location: "Electronic City",
-        distance_km: 36.8,
-        duration_min: 68,
-        average_speed: 44,
-        halt_time_min: 4,
-        started_at: new Date(Date.now() - 68 * 60000).toISOString(),
-        start_time: "10:45 AM",
-        last_seen_time: "11:53 AM",
-        vehicle: {
-          registration_number: "KA 51 M 8932",
-          model: "Mahindra Bolero",
-          vehicle_type: "Light Commercial Vehicle",
-        },
-        driver: {
-          full_name: "Amit S.",
-          phone: "+91 98112 44302",
-        },
-        timeline: [
-          { id: "e1", title: "Trip started", location: "Hebbal Hub", time: "10:45", status: "started" },
-          { id: "e2", title: "Traffic slow · 8 min", location: "Silk Board", time: "11:20", status: "halt" },
-          { id: "e3", title: "Current position", location: "Electronic City Expressway", time: "11:53", status: "active" },
-        ],
-      },
-      {
-        id: "t3",
-        trip_number: "TRIP-03",
-        status: "completed",
-        date_day: "02",
-        date_month: "NOV",
-        start_location: "Yeshwanthpur",
-        end_location: "Indiranagar",
-        distance_km: 18.2,
-        duration_min: 39,
-        average_speed: 35,
-        halt_time_min: 3,
-        started_at: new Date(Date.now() - 120 * 60000).toISOString(),
-        start_time: "09:30 AM",
-        last_seen_time: "10:09 AM",
-        vehicle: {
-          registration_number: "KA 04 AC 6173",
-          model: "Ashok Leyland Dost",
-          vehicle_type: "Light Commercial Vehicle",
-        },
-        driver: {
-          full_name: "Naveen R.",
-          phone: "+91 94220 55603",
-        },
-        timeline: [
-          { id: "e1", title: "Trip started", location: "Yeshwanthpur Industrial", time: "09:30", status: "started" },
-          { id: "e2", title: "Delivered package", location: "Malleshwaram", time: "09:50", status: "halt" },
-          { id: "e3", title: "Trip completed", location: "Indiranagar Gateway", time: "10:09", status: "completed" },
-        ],
-      },
-      {
-        id: "t4",
-        trip_number: "TRIP-04",
-        status: "attention",
-        date_day: "02",
-        date_month: "NOV",
-        start_location: "Peenya",
-        end_location: "Rajajinagar",
-        distance_km: 12.6,
-        duration_min: 31,
-        average_speed: 28,
-        halt_time_min: 12,
-        started_at: new Date(Date.now() - 45 * 60000).toISOString(),
-        start_time: "10:15 AM",
-        last_seen_time: "10:46 AM",
-        vehicle: {
-          registration_number: "KA 05 AB 2910",
-          model: "Tata Intra V30",
-          vehicle_type: "Light Commercial Vehicle",
-        },
-        driver: {
-          full_name: "Sanjay P.",
-          phone: "+91 99480 66704",
-        },
-        timeline: [
-          { id: "e1", title: "Trip started", location: "Peenya Stage 2", time: "10:15", status: "started" },
-          { id: "e2", title: "Halt · Breakdown warning", location: "Toll Gate", time: "10:32", status: "halt" },
-          { id: "e3", title: "Current position", location: "Rajajinagar Industrial", time: "10:46", status: "active" },
-        ],
-      },
-      {
-        id: "t5",
-        trip_number: "TRIP-05",
-        status: "completed",
-        date_day: "02",
-        date_month: "NOV",
-        start_location: "Whitefield",
-        end_location: "Marathahalli",
-        distance_km: 8.7,
-        duration_min: 24,
-        average_speed: 32,
-        halt_time_min: 2,
-        started_at: new Date(Date.now() - 180 * 60000).toISOString(),
-        start_time: "08:15 AM",
-        last_seen_time: "08:39 AM",
-        vehicle: {
-          registration_number: "KA 02 CD 7608",
-          model: "Mahindra Supro",
-          vehicle_type: "Delivery Van",
-        },
-        driver: {
-          full_name: "Dev M.",
-          phone: "+91 97180 77805",
-        },
-        timeline: [
-          { id: "e1", title: "Trip started", location: "Whitefield Depot", time: "08:15", status: "started" },
-          { id: "e2", title: "Delivered package", location: "Kundalahalli", time: "08:28", status: "halt" },
-          { id: "e3", title: "Trip completed", location: "Marathahalli Bridge", time: "08:39", status: "completed" },
-        ],
-      },
-      {
-        id: "t6",
-        trip_number: "TRIP-06",
-        status: "completed",
-        date_day: "02",
-        date_month: "NOV",
-        start_location: "Jayanagar",
-        end_location: "Hebbal",
-        distance_km: 21.3,
-        duration_min: 48,
-        average_speed: 36,
-        halt_time_min: 5,
-        started_at: new Date(Date.now() - 240 * 60000).toISOString(),
-        start_time: "07:30 AM",
-        last_seen_time: "08:18 AM",
-        vehicle: {
-          registration_number: "KA 41 DE 1192",
-          model: "Eicher Pro 2049",
-          vehicle_type: "Light Commercial Vehicle",
-        },
-        driver: {
-          full_name: "Farhan K.",
-          phone: "+91 98765 88906",
-        },
-        timeline: [
-          { id: "e1", title: "Trip started", location: "Jayanagar Hub", time: "07:30", status: "started" },
-          { id: "e2", title: "Check stop", location: "MG Road", time: "07:55", status: "halt" },
-          { id: "e3", title: "Trip completed", location: "Hebbal Flyover", time: "08:18", status: "completed" },
-        ],
-      },
-    ],
-    []
-  );
-
   const fetchTrips = useCallback(async () => {
     try {
+      setIsLoading(true);
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (searchQuery.trim()) params.set("search", searchQuery.trim());
@@ -267,23 +81,26 @@ export default function TripsView() {
       if (!res.ok) throw new Error("Failed to load trips data");
 
       const json = await res.json();
-      if (json.trips && json.trips.length > 0) {
+      if (json.trips) {
         setTrips(json.trips);
         if (json.metrics) setMetrics(json.metrics);
-        if (!selectedTripId) setSelectedTripId(json.trips[0].id);
+        setSelectedTripId((currentId) => {
+          if (currentId && json.trips.some((t: any) => t.id === currentId)) {
+            return currentId;
+          }
+          return json.trips[0]?.id || null;
+        });
       } else {
-        setTrips(initialFallbackTrips);
-        if (!selectedTripId) setSelectedTripId(initialFallbackTrips[0].id);
+        setTrips([]);
       }
     } catch (err) {
-      console.warn("Using fallback trips data:", err);
-      setTrips(initialFallbackTrips);
-      if (!selectedTripId) setSelectedTripId(initialFallbackTrips[0].id);
+      console.error("Failed to load trips:", err);
+      setTrips([]);
     } finally {
       setIsLoading(false);
       setLastSyncSeconds(0);
     }
-  }, [statusFilter, searchQuery, selectedTripId, initialFallbackTrips]);
+  }, [statusFilter, searchQuery]);
 
   useEffect(() => {
     fetchTrips();
@@ -308,8 +125,9 @@ export default function TripsView() {
 
   // Selected trip for the right inspector card
   const selectedTrip = useMemo(() => {
-    return trips.find((t) => t.id === selectedTripId) || trips[0] || initialFallbackTrips[0];
-  }, [trips, selectedTripId, initialFallbackTrips]);
+    if (!trips.length) return null;
+    return trips.find((t) => t.id === selectedTripId) || trips[0] || null;
+  }, [trips, selectedTripId]);
 
   // Pagination slice
   const totalPages = Math.ceil(trips.length / pageSize) || 1;
@@ -321,14 +139,17 @@ export default function TripsView() {
     const rows = trips.map((t) => [
       t.trip_number,
       t.vehicle.registration_number,
-      t.driver.full_name,
-      `${t.start_location} -> ${t.end_location}`,
+      `"${t.driver.full_name}"`,
+      `"${t.start_location} - ${t.end_location}"`,
       t.distance_km,
       t.duration_min,
       t.status,
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -341,42 +162,37 @@ export default function TripsView() {
   return (
     <div className="min-h-screen bg-[#f8faf9] flex font-sans text-gray-900 select-none">
       {/* ========================================= */}
-      {/* 1. LEFT SIDEBAR (Width: 256px)             */}
+      {/* 1. LEFT SIDEBAR                           */}
       {/* ========================================= */}
       <aside className="w-64 bg-white border-r border-gray-200/80 flex flex-col justify-between shrink-0 fixed inset-y-0 left-0 z-30">
         <div>
           {/* Top Brand Logo */}
-          <div className="h-16 px-6 flex items-center gap-3 border-b border-gray-100">
-            <div className="w-7 h-7 rounded-lg bg-[#11382b] flex items-center justify-center text-emerald-400">
-              <svg className="w-3.5 h-3.5 transform rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <rect x="3" y="3" width="18" height="18" rx="4" />
-                <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+          <div className="p-5 pb-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#11382b] flex items-center justify-center text-white shadow-xs">
+              <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 17 12 22 22 17" />
+                <polyline points="2 12 12 17 22 12" />
               </svg>
             </div>
             <div>
-              <span className="font-bold text-[15px] text-gray-900 tracking-tight leading-none block">
-                bytebeam
-              </span>
-              <span className="text-[8.5px] font-semibold tracking-[0.2em] uppercase text-emerald-800 leading-none block mt-0.5">
-                FLEET OPERATIONS
+              <span className="font-bold text-gray-900 tracking-tight text-sm block">bytebeam</span>
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block -mt-1 font-mono">
+                Fleet Operations
               </span>
             </div>
           </div>
 
           {/* Workspace Switcher */}
-          <div className="p-4">
-            <div className="rounded-xl border border-gray-200/80 bg-gray-50/50 p-2.5 flex items-center justify-between hover:bg-gray-100/60 transition-colors cursor-pointer">
+          <div className="p-3">
+            <div className="bg-[#f6f8f7] rounded-xl p-2.5 border border-gray-200/70 flex items-center justify-between cursor-pointer hover:bg-gray-100/70 transition-colors">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-[#eaf4f0] border border-emerald-200/60 flex items-center justify-center font-bold text-xs text-[#11382b]">
+                <div className="w-6 h-6 rounded-md bg-white border border-gray-200 flex items-center justify-center font-bold text-xs text-gray-700 shadow-2xs">
                   N
                 </div>
-                <div>
-                  <span className="text-[9px] uppercase tracking-wider font-semibold text-gray-400 block leading-tight">
-                    Workspace
-                  </span>
-                  <span className="text-xs font-bold text-gray-900 block leading-tight">
-                    Northstar Logistics
-                  </span>
+                <div className="leading-tight">
+                  <span className="text-[10px] text-gray-400 font-medium block">Workspace</span>
+                  <span className="text-xs font-semibold text-gray-800 block">Northstar Logistics</span>
                 </div>
               </div>
               <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -385,12 +201,12 @@ export default function TripsView() {
             </div>
           </div>
 
-          {/* Navigation Links */}
-          <div className="px-3 pt-2">
-            <span className="px-3 text-[10px] font-bold uppercase tracking-[0.22em] text-gray-400 block mb-2">
+          {/* Nav Items */}
+          <div className="px-3 py-2">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 block mb-1 font-mono">
               OPERATIONS
             </span>
-            <nav className="space-y-1">
+            <nav className="space-y-0.5">
               {/* Overview */}
               <button
                 onClick={() => router.push("/")}
@@ -413,19 +229,20 @@ export default function TripsView() {
                 <span>Vehicles</span>
               </button>
 
-              {/* Trips (ACTIVE on this page) */}
+              {/* Trips (Active Tab) */}
               <button
+                onClick={() => setStatusFilter("all")}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold bg-[#eaf4f0] text-[#11382b] transition-colors cursor-pointer"
               >
                 <svg className="w-4 h-4 text-[#11382b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
                 <span>Trips</span>
               </button>
 
               {/* Alerts */}
               <button
-                onClick={() => router.push("/#alerts")}
+                onClick={() => router.push("/alerts")}
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
@@ -434,7 +251,7 @@ export default function TripsView() {
                   </svg>
                   <span>Alerts</span>
                 </div>
-                <span className="w-4 h-4 rounded-full bg-red-100 text-red-700 text-[10px] font-bold flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full bg-red-100 text-red-700 text-[10px] font-bold flex items-center justify-center font-mono">
                   3
                 </span>
               </button>
@@ -442,39 +259,36 @@ export default function TripsView() {
           </div>
         </div>
 
-        {/* Lower Sidebar */}
-        <div className="p-4 space-y-4">
-          <div className="rounded-xl border border-gray-200/80 bg-gray-50/70 p-3.5">
-            <h4 className="text-xs font-semibold text-gray-900">Need a hand?</h4>
+        {/* Bottom Help Card & Profile */}
+        <div>
+          <div className="p-3 mx-3 mb-3 bg-[#f6f8f7] border border-gray-200/60 rounded-xl">
+            <span className="text-xs font-semibold text-gray-900 block">Need a hand?</span>
             <p className="text-[11px] text-gray-500 mt-1 leading-snug">
               Find quick answers about fleet status and trip data.
             </p>
-            <a href="#help" className="text-[11px] font-medium text-[#11382b] hover:underline mt-2 inline-block">
-              Open help center →
-            </a>
+            <button className="text-[11px] font-medium text-[#11382b] hover:underline mt-2 flex items-center gap-1 cursor-pointer">
+              <span>Open help center</span>
+              <span>→</span>
+            </button>
           </div>
 
-          <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-[#a88168] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+          <div className="p-3 border-t border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center text-xs font-bold text-amber-800">
                 {initials}
               </div>
-              <div className="min-w-0">
-                <span className="text-xs font-semibold text-gray-900 block truncate leading-tight">
-                  {displayName}
-                </span>
-                <span className="text-[10px] text-gray-500 block truncate leading-tight mt-0.5">
-                  {userRole}
-                </span>
+              <div className="leading-tight">
+                <span className="text-xs font-semibold text-gray-800 block">{displayName}</span>
+                <span className="text-[10px] text-gray-400 block">{userRole}</span>
               </div>
             </div>
             <button
               onClick={handleSignOut}
               title="Sign out"
-              className="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+              className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
               </svg>
             </button>
           </div>
@@ -482,99 +296,120 @@ export default function TripsView() {
       </aside>
 
       {/* ========================================= */}
-      {/* 2. MAIN TRIPS WORKSPACE                    */}
+      {/* 2. MAIN WORKSPACE CONTENT AREA             */}
       {/* ========================================= */}
-      <div className="flex-1 pl-64 flex flex-col min-w-0">
-        {/* Top Header */}
-        <header className="h-14 bg-white border-b border-gray-200/80 px-6 sm:px-8 flex items-center justify-between sticky top-0 z-20">
-          <div className="flex items-center gap-2 text-xs font-medium text-gray-400">
-            <span>Fleet</span>
-            <span>/</span>
-            <span className="text-gray-800 font-semibold">Trips</span>
+      <div className="flex-1 ml-64 flex flex-col min-w-0">
+        {/* Top Navbar */}
+        <header className="h-14 bg-white border-b border-gray-200/80 px-6 flex items-center justify-between shrink-0 sticky top-0 z-20">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span className="hover:text-gray-700 cursor-pointer" onClick={() => router.push("/")}>
+              Fleet
+            </span>
+            <span className="text-gray-300">/</span>
+            <span className="font-semibold text-gray-900">Trips</span>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="relative hidden md:block">
+            {/* Search Input */}
+            <div className="relative">
               <input
                 type="text"
                 placeholder="Search vehicles, trips..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-56 lg:w-64 pl-8 pr-8 py-1.5 rounded-lg border border-gray-200/80 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#11382b] bg-gray-50/50"
+                className="w-56 pl-8 pr-8 py-1.5 text-xs rounded-lg border border-gray-200 bg-gray-50/50 text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#11382b]"
               />
               <svg className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-mono text-gray-400 border border-gray-200 px-1 py-0.2 rounded bg-white">
+              <kbd className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-mono text-gray-400 border border-gray-200 px-1 rounded bg-white">
                 ⌘K
-              </span>
+              </kbd>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] font-mono text-gray-500">
-                Last sync: {lastSyncSeconds} sec ago
-              </span>
+            {/* Sync Pill */}
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 font-sans">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="text-[11px]">Last sync: {lastSyncSeconds}s ago</span>
             </div>
 
-            <button className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+            {/* Notification Bell */}
+            <button
+              onClick={() => router.push("/alerts")}
+              title="Alerts"
+              className="relative p-1 text-gray-400 hover:text-gray-600 transition-colors"
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500" />
             </button>
 
-            <div className="w-7 h-7 rounded-full bg-[#a88168] text-white flex items-center justify-center font-bold text-[11px]">
+            {/* Avatar Pill */}
+            <div className="w-7 h-7 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center text-xs font-bold text-amber-800">
               {initials}
             </div>
           </div>
         </header>
 
-        {/* Content Body */}
-        <main className="p-6 sm:p-8 space-y-6 max-w-350 w-full mx-auto">
-          {/* Page Title & Controls */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        {/* Workspace Body */}
+        <div className="p-6 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
+          {/* Header Title Section */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <span className="text-[10px] font-mono font-medium tracking-[0.2em] text-gray-400 uppercase block">
-                FLEET &nbsp;/&nbsp; ACTIVITY LOG
+              <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-emerald-800/80 block">
+                FLEET / ACTIVITY LOG
               </span>
-              <h1 className="text-2xl sm:text-[28px] font-bold text-gray-900 tracking-tight mt-0.5">
-                Trips
-              </h1>
-              <p className="text-xs text-gray-500 mt-1">
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight mt-0.5">Trips</h1>
+              <p className="text-xs text-gray-500 mt-0.5">
                 Review routes, durations, and notable vehicle activity.
               </p>
             </div>
 
+            {/* Actions: Date Picker & Filters Button */}
             <div className="flex items-center gap-2">
-              <button className="flex items-center gap-1.5 rounded-lg border border-gray-200/90 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-2xs transition-colors cursor-pointer">
+              <button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-2xs hover:bg-gray-50 transition-colors cursor-pointer">
                 <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <span>Today, Nov 02</span>
-                <span className="text-gray-400 text-[10px]">▾</span>
+                <span>Today</span>
+                <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
 
-              <button className="flex items-center gap-1.5 rounded-lg border border-gray-200/90 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-2xs transition-colors cursor-pointer">
+              <button
+                onClick={fetchTrips}
+                title="Refresh trips"
+                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-2xs hover:bg-gray-50 transition-colors cursor-pointer"
+              >
                 <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span>Filters</span>
+                <span>Refresh</span>
               </button>
             </div>
           </div>
 
           {/* ========================================= */}
-          {/* 3. TOP 3 METRIC CARDS                     */}
+          {/* 3. TOP 3 METRIC CARDS WITH SKELETONS      */}
           {/* ========================================= */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Card 1: Trips today */}
             <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs flex flex-col justify-between">
               <span className="text-xs font-medium text-gray-500 block">Trips today</span>
               <div className="mt-2">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold text-gray-900">{metrics.tripsToday}</span>
-                  <span className="text-xs text-gray-400">across {metrics.totalVehiclesCount} vehicles</span>
-                </div>
+                {isLoading ? (
+                  <div className="flex items-baseline gap-2 animate-pulse">
+                    <div className="h-7 w-12 bg-gray-200 rounded" />
+                    <div className="h-3 w-24 bg-gray-100 rounded" />
+                  </div>
+                ) : (
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-2xl font-bold text-gray-900">{metrics.tripsToday}</span>
+                    <span className="text-xs text-gray-400">across {metrics.totalVehiclesCount} vehicles</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -582,12 +417,19 @@ export default function TripsView() {
             <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs flex flex-col justify-between">
               <span className="text-xs font-medium text-gray-500 block">Distance covered</span>
               <div className="mt-2">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold text-gray-900">
-                    {metrics.distanceCoveredKm.toLocaleString()} km
-                  </span>
-                  <span className="text-xs text-emerald-700 font-medium">+13% vs yesterday</span>
-                </div>
+                {isLoading ? (
+                  <div className="flex items-baseline gap-2 animate-pulse">
+                    <div className="h-7 w-20 bg-gray-200 rounded" />
+                    <div className="h-3 w-20 bg-gray-100 rounded" />
+                  </div>
+                ) : (
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-2xl font-bold text-gray-900">
+                      {metrics.distanceCoveredKm.toLocaleString()} km
+                    </span>
+                    <span className="text-xs text-emerald-700 font-medium">live fleet log</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -595,10 +437,17 @@ export default function TripsView() {
             <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs flex flex-col justify-between">
               <span className="text-xs font-medium text-gray-500 block">Avg. trip duration</span>
               <div className="mt-2">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold text-gray-900">{metrics.avgTripDurationMin} min</span>
-                  <span className="text-xs text-gray-400">{metrics.activeTripsCount} trips still active</span>
-                </div>
+                {isLoading ? (
+                  <div className="flex items-baseline gap-2 animate-pulse">
+                    <div className="h-7 w-16 bg-gray-200 rounded" />
+                    <div className="h-3 w-24 bg-gray-100 rounded" />
+                  </div>
+                ) : (
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-2xl font-bold text-gray-900">{metrics.avgTripDurationMin} min</span>
+                    <span className="text-xs text-gray-400">{metrics.activeTripsCount} trips still active</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -614,7 +463,7 @@ export default function TripsView() {
                 <div className="p-4 sm:p-5 border-b border-gray-100 flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-gray-900">
-                      Recent activity · {metrics.totalTrips} trips
+                      {isLoading ? "Recent activity" : `Recent activity · ${metrics.totalTrips} trips`}
                     </h3>
                     <p className="text-[11px] text-gray-400 mt-0.5">
                       Select a trip to inspect its route and details.
@@ -642,9 +491,8 @@ export default function TripsView() {
                         : "text-gray-500 hover:bg-gray-100"
                     }`}
                   >
-                    All trips {metrics.totalTrips}
+                    All trips {isLoading ? "" : metrics.totalTrips}
                   </button>
-
                   <button
                     onClick={() => {
                       setStatusFilter("in_progress");
@@ -656,9 +504,8 @@ export default function TripsView() {
                         : "text-gray-500 hover:bg-gray-100"
                     }`}
                   >
-                    In progress {metrics.activeTripsCount}
+                    In progress {isLoading ? "" : metrics.activeTripsCount}
                   </button>
-
                   <button
                     onClick={() => {
                       setStatusFilter("completed");
@@ -670,9 +517,8 @@ export default function TripsView() {
                         : "text-gray-500 hover:bg-gray-100"
                     }`}
                   >
-                    Completed
+                    Completed {isLoading ? "" : metrics.completedCount}
                   </button>
-
                   <button
                     onClick={() => {
                       setStatusFilter("attention");
@@ -684,17 +530,26 @@ export default function TripsView() {
                         : "text-gray-500 hover:bg-gray-100"
                     }`}
                   >
-                    Attention {metrics.attentionCount}
+                    Attention {isLoading ? "" : metrics.attentionCount}
                   </button>
                 </div>
 
-                {/* Trips Rows */}
+                {/* Trips Rows with Loading Skeletons */}
                 <div className="divide-y divide-gray-100">
                   {isLoading ? (
-                    <div className="py-16 text-center">
-                      <div className="w-6 h-6 border-2 border-[#11382b] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                      <span className="text-xs text-gray-400 font-mono">LOADING ACTIVITY LOG...</span>
-                    </div>
+                    Array.from({ length: 6 }).map((_, idx) => (
+                      <div key={idx} className="p-3.5 sm:px-5 flex items-center justify-between gap-4 animate-pulse">
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-9 h-9 rounded-lg bg-gray-100 shrink-0" />
+                          <div className="space-y-1.5">
+                            <div className="h-3 w-28 bg-gray-200 rounded" />
+                            <div className="h-2.5 w-48 bg-gray-100 rounded" />
+                            <div className="h-2 w-36 bg-gray-100 rounded" />
+                          </div>
+                        </div>
+                        <div className="h-5 w-16 bg-gray-100 rounded-full" />
+                      </div>
+                    ))
                   ) : paginatedTrips.length === 0 ? (
                     <div className="py-16 text-center text-xs text-gray-400">
                       No trips match the selected filter.
@@ -750,18 +605,22 @@ export default function TripsView() {
                                 {trip.start_location} <span className="text-gray-400">──</span> {trip.end_location}
                               </div>
 
-                              <div className="text-[11px] text-gray-400 font-mono mt-0.5 truncate">
-                                {trip.distance_km} km · {trip.duration_min} min · {trip.driver?.full_name}
+                              <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1.5 font-mono">
+                                <span>{trip.distance_km} km</span>
+                                <span>·</span>
+                                <span>{trip.duration_min} min</span>
+                                <span>·</span>
+                                <span className="text-gray-500 font-sans">{trip.driver?.full_name}</span>
                               </div>
                             </div>
                           </div>
 
-                          {/* Status Pill */}
-                          <div className="shrink-0">
-                            <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[10.5px] font-semibold ${statusBadgeClass}`}>
-                              {statusText}
-                            </span>
-                          </div>
+                          {/* Status Badge */}
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold border shrink-0 ${statusBadgeClass}`}
+                          >
+                            {statusText}
+                          </span>
                         </div>
                       );
                     })
@@ -770,9 +629,9 @@ export default function TripsView() {
               </div>
 
               {/* Pagination Footer */}
-              <div className="p-3.5 sm:px-5 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 bg-white">
+              <div className="p-3.5 sm:px-5 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                 <span>
-                  Showing {Math.min(trips.length, paginatedTrips.length)} of {metrics.totalTrips} trips
+                  Showing {paginatedTrips.length} of {metrics.totalTrips} trips
                 </span>
 
                 <div className="flex items-center gap-1">
@@ -784,19 +643,21 @@ export default function TripsView() {
                     Previous
                   </button>
 
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPage(i + 1)}
-                      className={`w-5 h-5 rounded flex items-center justify-center text-xs font-medium transition-colors cursor-pointer ${
-                        currentPage === i + 1
-                          ? "bg-[#11382b] text-white"
-                          : "text-gray-600 hover:bg-gray-100"
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
+                  <div className="flex items-center gap-1 px-1">
+                    {Array.from({ length: Math.min(5, totalPages) }).map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentPage(idx + 1)}
+                        className={`w-6 h-6 rounded text-xs font-medium cursor-pointer ${
+                          currentPage === idx + 1
+                            ? "bg-[#11382b] text-white"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        {idx + 1}
+                      </button>
+                    ))}
+                  </div>
 
                   <button
                     disabled={currentPage >= totalPages}
@@ -811,137 +672,179 @@ export default function TripsView() {
 
             {/* Right Column: Selected Trip Inspector (5 cols) */}
             <div className="lg:col-span-5 bg-white rounded-2xl border border-gray-200/80 p-5 shadow-2xs space-y-4">
-              {/* Selected Trip Header */}
-              <div className="flex items-start justify-between border-b border-gray-100 pb-3">
-                <div>
-                  <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-gray-400 block">
-                    SELECTED TRIP · 02 NOV
-                  </span>
-                  <h3 className="text-base font-bold text-gray-900 tracking-tight mt-0.5">
-                    {selectedTrip.start_location} <span className="text-gray-400 font-light">──</span> {selectedTrip.end_location}
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    <button
-                      onClick={() => {
-                        setInspectVehicle({
-                          id: selectedTrip.vehicle_id || "v-selected",
-                          registration_number: selectedTrip.vehicle.registration_number,
-                          manufacturer: selectedTrip.vehicle.model.split(" ")[0],
-                          model: selectedTrip.vehicle.model,
-                          vehicle_type: selectedTrip.vehicle.vehicle_type,
-                          status: selectedTrip.status === "in_progress" ? "moving" : "idle",
-                          current_speed: selectedTrip.average_speed,
-                          driver: {
-                            full_name: selectedTrip.driver.full_name,
-                            phone: selectedTrip.driver.phone || "+91 98450 12345",
-                            license_number: "KA0120200045674",
-                          },
-                          last_seen_at: selectedTrip.started_at,
-                          latitude: 12.9716,
-                          longitude: 77.5946,
-                          ignition_on: selectedTrip.status === "in_progress",
-                          fuel_level: 64,
-                          battery_level: 88,
-                        });
-                      }}
-                      className="hover:underline hover:text-[#11382b] font-semibold text-gray-700 cursor-pointer"
-                    >
-                      {selectedTrip.vehicle.registration_number}
-                    </button>{" "}
-                    · {selectedTrip.vehicle.model} · {selectedTrip.driver.full_name}
-                  </p>
-                </div>
-
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold capitalize ${
-                    selectedTrip.status === "in_progress"
-                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                      : selectedTrip.status === "attention"
-                      ? "bg-amber-50 text-amber-800 border border-amber-200"
-                      : "bg-gray-100 text-gray-700 border border-gray-200"
-                  }`}
-                >
-                  {selectedTrip.status === "in_progress" ? "In progress" : selectedTrip.status}
-                </span>
-              </div>
-
-              {/* Mapbox Route Canvas Component */}
-              <SelectedTripMap
-                startLocation={selectedTrip.start_location}
-                endLocation={selectedTrip.end_location}
-                startTime={selectedTrip.start_time || "11:16 AM"}
-                lastSeenTime={selectedTrip.last_seen_time || "12:08 PM"}
-                currentLocationName="Indiranagar"
-              />
-
-              {/* 3 Metric Stats below Map */}
-              <div className="grid grid-cols-3 gap-3 pt-1">
-                <div>
-                  <span className="text-[10px] text-gray-400 uppercase font-medium block">Distance</span>
-                  <span className="text-sm font-bold font-mono text-gray-900 mt-0.5 block">
-                    {selectedTrip.distance_km} km
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-gray-400 uppercase font-medium block">Duration</span>
-                  <span className="text-sm font-bold font-mono text-gray-900 mt-0.5 block">
-                    {selectedTrip.duration_min} min
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-gray-400 uppercase font-medium block">Avg. speed</span>
-                  <span className="text-sm font-bold font-mono text-gray-900 mt-0.5 block">
-                    {selectedTrip.average_speed} km/h
-                  </span>
-                </div>
-              </div>
-
-              {/* Key Events Timeline */}
-              <div className="pt-3 border-t border-gray-100">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3">
-                  Key events
-                </span>
-
-                <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-200">
-                  {(selectedTrip.timeline || []).map((ev) => (
-                    <div key={ev.id} className="relative">
-                      <div
-                        className={`absolute -left-6 top-1 w-4 h-4 rounded-full bg-white border-2 flex items-center justify-center ${
-                          ev.status === "halt"
-                            ? "border-amber-500"
-                            : "border-emerald-600"
-                        }`}
-                      >
-                        <div
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            ev.status === "halt"
-                              ? "bg-amber-500"
-                              : "bg-emerald-600"
-                          }`}
-                        />
-                      </div>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h5 className="text-xs font-bold text-gray-900">{ev.title}</h5>
-                          <p className="text-[11px] text-gray-500 mt-0.5">{ev.location}</p>
-                        </div>
-                        <span className="text-[11px] font-mono text-gray-400">{ev.time}</span>
-                      </div>
+              {isLoading ? (
+                /* Inspector Skeleton while loading */
+                <div className="space-y-4 animate-pulse">
+                  <div className="flex items-start justify-between border-b border-gray-100 pb-3">
+                    <div className="space-y-1.5">
+                      <div className="h-2.5 w-24 bg-gray-200 rounded" />
+                      <div className="h-4 w-48 bg-gray-200 rounded" />
+                      <div className="h-3 w-36 bg-gray-100 rounded" />
                     </div>
-                  ))}
+                    <div className="h-5 w-20 bg-gray-200 rounded-full" />
+                  </div>
+                  <div className="w-full h-64 sm:h-72 rounded-xl bg-gray-100 flex items-center justify-center">
+                    <div className="flex items-center gap-2 text-xs text-gray-400 font-mono">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                      <span>LOADING ROUTE MAP...</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-center space-y-1">
+                        <div className="h-2 w-12 bg-gray-200 rounded mx-auto" />
+                        <div className="h-4 w-16 bg-gray-200 rounded mx-auto" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : selectedTrip ? (
+                <>
+                  {/* Selected Trip Header */}
+                  <div className="flex items-start justify-between border-b border-gray-100 pb-3">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-gray-400 block">
+                        SELECTED TRIP · {selectedTrip.date_day} {selectedTrip.date_month}
+                      </span>
+                      <h3 className="text-base font-bold text-gray-900 tracking-tight mt-0.5">
+                        {selectedTrip.start_location} <span className="text-gray-400 font-light">──</span> {selectedTrip.end_location}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        <button
+                          onClick={() => {
+                            setInspectVehicle({
+                              id: selectedTrip.vehicle_id || "v-selected",
+                              registration_number: selectedTrip.vehicle.registration_number,
+                              manufacturer: selectedTrip.vehicle.model.split(" ")[0],
+                              model: selectedTrip.vehicle.model,
+                              vehicle_type: selectedTrip.vehicle.vehicle_type,
+                              status: selectedTrip.status === "in_progress" ? "moving" : "idle",
+                              current_speed: selectedTrip.average_speed,
+                              driver: {
+                                full_name: selectedTrip.driver.full_name,
+                                phone: selectedTrip.driver.phone || "+91 98450 12345",
+                                license_number: "KA0120200045674",
+                              },
+                              last_seen_at: selectedTrip.started_at,
+                              latitude: 12.9716,
+                              longitude: 77.5946,
+                              ignition_on: selectedTrip.status === "in_progress",
+                              fuel_level: 64,
+                              battery_level: 88,
+                            });
+                          }}
+                          className="hover:underline hover:text-[#11382b] font-semibold text-gray-700 cursor-pointer"
+                        >
+                          {selectedTrip.vehicle.registration_number}
+                        </button>{" "}
+                        · {selectedTrip.vehicle.model} · {selectedTrip.driver.full_name}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold capitalize ${
+                        selectedTrip.status === "in_progress"
+                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                          : selectedTrip.status === "attention"
+                          ? "bg-amber-50 text-amber-800 border border-amber-200"
+                          : "bg-gray-100 text-gray-600 border border-gray-200"
+                      }`}
+                    >
+                      {selectedTrip.status === "in_progress"
+                        ? "In progress"
+                        : selectedTrip.status === "attention"
+                        ? "Attention"
+                        : "Completed"}
+                    </span>
+                  </div>
+
+                  {/* Mapbox Route Visualizer */}
+                  <div className="pt-1">
+                    <SelectedTripMap
+                      startLocation={selectedTrip.start_location}
+                      endLocation={selectedTrip.end_location}
+                      startTime={selectedTrip.start_time}
+                      lastSeenTime={selectedTrip.last_seen_time}
+                      currentLocationName={selectedTrip.end_location}
+                    />
+                  </div>
+
+                  {/* 3 Metric Cards */}
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    <div className="bg-gray-50/80 rounded-xl p-2.5 border border-gray-100 text-center">
+                      <span className="text-[10px] text-gray-400 font-medium block">Distance</span>
+                      <span className="text-sm font-bold text-gray-900 block mt-0.5 font-mono">
+                        {selectedTrip.distance_km} km
+                      </span>
+                    </div>
+
+                    <div className="bg-gray-50/80 rounded-xl p-2.5 border border-gray-100 text-center">
+                      <span className="text-[10px] text-gray-400 font-medium block">Duration</span>
+                      <span className="text-sm font-bold text-gray-900 block mt-0.5 font-mono">
+                        {selectedTrip.duration_min} min
+                      </span>
+                    </div>
+
+                    <div className="bg-gray-50/80 rounded-xl p-2.5 border border-gray-100 text-center">
+                      <span className="text-[10px] text-gray-400 font-medium block">Avg. speed</span>
+                      <span className="text-sm font-bold text-gray-900 block mt-0.5 font-mono">
+                        {selectedTrip.average_speed} km/h
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Key Events Vertical Timeline */}
+                  <div className="pt-2 border-t border-gray-100">
+                    <span className="text-xs font-bold text-gray-900 block mb-3">Key events</span>
+
+                    <div className="relative pl-6 space-y-3.5 before:absolute before:left-2 before:top-1.5 before:bottom-1.5 before:w-0.5 before:bg-gray-200">
+                      {(selectedTrip.timeline || []).map((event, idx) => (
+                        <div key={event.id || idx} className="relative flex items-baseline justify-between text-xs">
+                          {/* Dot Bullet */}
+                          <div
+                            className={`absolute -left-6 top-1 w-2.5 h-2.5 rounded-full border-2 bg-white ${
+                              event.status === "active"
+                                ? "border-emerald-600 bg-emerald-500 ring-2 ring-emerald-100"
+                                : event.status === "halt"
+                                ? "border-amber-500 bg-amber-400"
+                                : "border-gray-400 bg-white"
+                            }`}
+                          />
+
+                          <div className="pr-2">
+                            <span className="font-semibold text-gray-800 block text-xs leading-snug">
+                              {event.title}
+                            </span>
+                            <span className="text-[11px] text-gray-400 block mt-0.5">
+                              {event.location}
+                            </span>
+                          </div>
+
+                          <span className="text-[11px] font-mono text-gray-400 shrink-0">
+                            {event.time}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="py-12 text-center text-xs text-gray-400">
+                  No trip selected.
+                </div>
+              )}
             </div>
           </div>
-        </main>
+        </div>
       </div>
 
-      {/* Vehicle Detail Slide-over Drawer if vehicle is clicked */}
-      <VehicleDetailDrawer
-        vehicle={inspectVehicle}
-        onClose={() => setInspectVehicle(null)}
-        onViewOnMap={(v) => router.push(`/?vehicle=${v.id}`)}
-      />
+      {/* Vehicle Detail Drawer Modal */}
+      {inspectVehicle && (
+        <VehicleDetailDrawer
+          vehicle={inspectVehicle}
+          onClose={() => setInspectVehicle(null)}
+        />
+      )}
     </div>
   );
 }

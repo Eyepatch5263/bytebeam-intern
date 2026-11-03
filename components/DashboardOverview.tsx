@@ -20,7 +20,7 @@ interface DashboardOverviewProps {
 export default function DashboardOverview({ user }: DashboardOverviewProps) {
   const router = useRouter();
   const supabase = createClient();
-  const { data: fleetData, secondsAgo, refetch, tripFilter, setTripFilter } = useFleetVehicle(20000);
+  const { data: fleetData, isLoading, secondsAgo, refetch, tripFilter, setTripFilter } = useFleetVehicle(20000);
 
   const [activeTab, setActiveTab] = useState<"overview" | "vehicles" | "trips" | "alerts">("overview");
   const [vehicleFilter, setVehicleFilter] = useState<"all" | "moving" | "idle" | "offline">("all");
@@ -54,15 +54,15 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
     .slice(0, 2)
     .toUpperCase();
 
-  // Metrics calculated dynamically from API / live database with fallbacks matching reference
+  // Metrics calculated dynamically from live database
   const metrics = fleetData?.metrics || {
-    vehiclesInMotion: 19,
-    totalVehicles: 20,
-    parkedVehicles: 6,
-    offlineVehicles: 8,
-    openAlerts: 3,
-    urgentAlerts: 2,
-    distanceToday: 1248,
+    vehiclesInMotion: 0,
+    totalVehicles: 0,
+    parkedVehicles: 0,
+    offlineVehicles: 0,
+    openAlerts: 0,
+    urgentAlerts: 0,
+    distanceToday: 0,
   };
 
   // Vehicles list
@@ -72,118 +72,11 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
     return v.status === vehicleFilter;
   });
 
-  // Recent trips fallback matching reference
-  const trips = fleetData?.trips?.length
-    ? fleetData.trips
-    : [
-        {
-          id: "1",
-          trip_number: "TRIP-01",
-          status: "ongoing" as const,
-          start_location: "Koramangala",
-          end_location: "Whitefield",
-          distance_km: 28.4,
-          average_speed: 42,
-          started_at: new Date(Date.now() - 52 * 60000).toISOString(),
-          ended_at: null,
-          vehicle: {
-            registration_number: "KA 03 MN 4821",
-            model: "Tata Ace",
-            vehicle_type: "Light Commercial Vehicle",
-          },
-          driver: { full_name: "Rohan Kumar" },
-        },
-        {
-          id: "2",
-          trip_number: "TRIP-02",
-          status: "ongoing" as const,
-          start_location: "Hebbal",
-          end_location: "Electronic City",
-          distance_km: 36.8,
-          average_speed: 48,
-          started_at: new Date(Date.now() - 68 * 60000).toISOString(),
-          ended_at: null,
-          vehicle: {
-            registration_number: "KA 51 M 8932",
-            model: "Mahindra Bolero",
-            vehicle_type: "Delivery Van",
-          },
-          driver: { full_name: "Amit S." },
-        },
-        {
-          id: "3",
-          trip_number: "TRIP-03",
-          status: "completed" as const,
-          start_location: "Yeshwanthpur",
-          end_location: "Indiranagar",
-          distance_km: 18.2,
-          average_speed: 35,
-          started_at: new Date(Date.now() - 120 * 60000).toISOString(),
-          ended_at: new Date(Date.now() - 81 * 60000).toISOString(),
-          vehicle: {
-            registration_number: "KA 04 AC 6173",
-            model: "Ashok Leyland Dost",
-            vehicle_type: "Light Commercial Vehicle",
-          },
-          driver: { full_name: "Naveen R." },
-        },
-        {
-          id: "4",
-          trip_number: "TRIP-04",
-          status: "cancelled" as const,
-          start_location: "Peenya",
-          end_location: "Rajajinagar",
-          distance_km: 12.6,
-          average_speed: 28,
-          started_at: new Date(Date.now() - 45 * 60000).toISOString(),
-          ended_at: null,
-          vehicle: {
-            registration_number: "KA 05 AB 2910",
-            model: "Tata Intra V30",
-            vehicle_type: "Light Commercial Vehicle",
-          },
-          driver: { full_name: "Sanjay P." },
-        },
-      ];
+  // Recent trips directly from database
+  const trips = fleetData?.trips || [];
 
-  // Alerts fallback matching reference
-  const alerts = fleetData?.alerts?.length
-    ? fleetData.alerts
-    : [
-        {
-          id: "a1",
-          vehicle_id: "v1",
-          alert_type: "overspeeding",
-          severity: "high" as const,
-          title: "Overspeed detected",
-          description: "KA 03 MN 4821 · 72 km/h in a 50 km/h zone",
-          status: "active" as const,
-          triggered_at: "12:08 PM",
-          vehicle: { registration_number: "KA 03 MN 4821", model: "Tata Ace" },
-        },
-        {
-          id: "a2",
-          vehicle_id: "v2",
-          alert_type: "offline",
-          severity: "medium" as const,
-          title: "Vehicle offline",
-          description: "KA 05 AB 2910 · No signal for 34 minutes",
-          status: "active" as const,
-          triggered_at: "11:42 AM",
-          vehicle: { registration_number: "KA 05 AB 2910", model: "Tata Intra V30" },
-        },
-        {
-          id: "a3",
-          vehicle_id: "v3",
-          alert_type: "low_fuel",
-          severity: "low" as const,
-          title: "Fuel level low",
-          description: "KA 51 M 8932 · Remaining fuel 14%",
-          status: "active" as const,
-          triggered_at: "10:56 AM",
-          vehicle: { registration_number: "KA 51 M 8932", model: "Mahindra Bolero" },
-        },
-      ];
+  // Alerts directly from database
+  const alerts = fleetData?.alerts || [];
 
   return (
     <div className="min-h-screen bg-[#f8faf9] flex font-sans text-gray-900 select-none">
@@ -281,7 +174,7 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
 
               {/* Alerts */}
               <button
-                onClick={() => setActiveTab("alerts")}
+                onClick={() => router.push("/alerts")}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                   activeTab === "alerts"
                     ? "bg-[#eaf4f0] text-[#11382b] font-semibold"
@@ -438,71 +331,95 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Card 1: Vehicles in motion */}
             <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs flex flex-col justify-between">
-              <div className="flex items-start justify-between">
-                <span className="text-xs font-medium text-gray-500">Vehicles in motion</span>
-                
-              </div>
+              <span className="text-xs font-medium text-gray-500">Vehicles in motion</span>
               <div className="mt-2">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold text-gray-900">{metrics.vehiclesInMotion}</span>
-                  <span className="text-xs text-gray-400">of {metrics.totalVehicles} vehicles</span>
-                </div>
-                <div className="text-[11px] font-medium text-emerald-700 mt-1">
-                  ↑ 2 since 9:00 AM
-                </div>
+                {isLoading ? (
+                  <div className="flex items-baseline gap-2 animate-pulse">
+                    <div className="h-7 w-12 bg-gray-200 rounded" />
+                    <div className="h-3 w-16 bg-gray-100 rounded" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold text-gray-900">{metrics.vehiclesInMotion}</span>
+                      <span className="text-xs text-gray-400">of {metrics.totalVehicles} vehicles</span>
+                    </div>
+                    <div className="text-[11px] font-medium text-emerald-700 mt-1">
+                      Active on fleet routes
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Card 2: Parked / idle */}
             <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs flex flex-col justify-between">
-              <div className="flex items-start justify-between">
-                <span className="text-xs font-medium text-gray-500">Parked / idle</span>
-               
-              </div>
+              <span className="text-xs font-medium text-gray-500">Parked / idle</span>
               <div className="mt-2">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold text-gray-900">{metrics.parkedVehicles}</span>
-                  <span className="text-xs text-gray-400">vehicles currently parked</span>
-                </div>
-                <div className="text-[11px] text-gray-400 mt-1">
-                  4 at depot
-                </div>
+                {isLoading ? (
+                  <div className="flex items-baseline gap-2 animate-pulse">
+                    <div className="h-7 w-12 bg-gray-200 rounded" />
+                    <div className="h-3 w-20 bg-gray-100 rounded" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold text-gray-900">{metrics.parkedVehicles}</span>
+                      <span className="text-xs text-gray-400">vehicles parked</span>
+                    </div>
+                    <div className="text-[11px] text-gray-400 mt-1">
+                      Ignition off / stationary
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Card 3: Needs attention */}
             <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs flex flex-col justify-between">
-              <div className="flex items-start justify-between">
-                <span className="text-xs font-medium text-gray-500">Needs attention</span>
-                
-              </div>
+              <span className="text-xs font-medium text-gray-500">Needs attention</span>
               <div className="mt-2">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold text-gray-900">{metrics.openAlerts}</span>
-                  <span className="text-xs text-gray-400">open fleet alerts</span>
-                </div>
-                <div className="text-[11px] font-medium text-amber-700 mt-1">
-                  {metrics.urgentAlerts} urgent · 1 device
-                </div>
+                {isLoading ? (
+                  <div className="flex items-baseline gap-2 animate-pulse">
+                    <div className="h-7 w-10 bg-gray-200 rounded" />
+                    <div className="h-3 w-20 bg-gray-100 rounded" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold text-gray-900">{metrics.openAlerts}</span>
+                      <span className="text-xs text-gray-400">open fleet alerts</span>
+                    </div>
+                    <div className="text-[11px] font-medium text-amber-700 mt-1">
+                      {metrics.urgentAlerts} high priority
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Card 4: Distance today */}
             <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs flex flex-col justify-between">
-              <div className="flex items-start justify-between">
-                <span className="text-xs font-medium text-gray-500">Distance today</span>
-                
-              </div>
+              <span className="text-xs font-medium text-gray-500">Distance today</span>
               <div className="mt-2">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold text-gray-900">
-                    {metrics.distanceToday.toLocaleString()} km
-                  </span>
-                  <span className="text-xs text-gray-400">across active trips</span>
-                </div>
-                <div className="text-[11px] font-medium text-emerald-700 mt-1">
-                  ↑ 13% vs yesterday
-                </div>
+                {isLoading ? (
+                  <div className="flex items-baseline gap-2 animate-pulse">
+                    <div className="h-7 w-16 bg-gray-200 rounded" />
+                    <div className="h-3 w-20 bg-gray-100 rounded" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold text-gray-900">
+                        {metrics.distanceToday.toLocaleString()} km
+                      </span>
+                      <span className="text-xs text-gray-400">across active trips</span>
+                    </div>
+                    <div className="text-[11px] font-medium text-emerald-700 mt-1">
+                      Live fleet odometer sum
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -563,15 +480,33 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
                       {metrics.openAlerts} open
                     </span>
                   </div>
-                  <a href="#alerts" className="text-xs font-medium text-[#11382b] hover:underline">
+                  <button
+                    onClick={() => router.push("/alerts")}
+                    className="text-xs font-medium text-[#11382b] hover:underline cursor-pointer"
+                  >
                     view all →
-                  </a>
+                  </button>
                 </div>
                 <p className="text-[11px] text-gray-400 mt-0.5">Prioritized for your review</p>
 
                 {/* Alert list */}
                 <div className="mt-4 divide-y divide-gray-100">
-                  {alerts.slice(0, 3).map((alert) => {
+                  {isLoading ? (
+                    Array.from({ length: 3 }).map((_, idx) => (
+                      <div key={idx} className="py-3 flex items-start gap-3 animate-pulse">
+                        <div className="w-7 h-7 rounded-full bg-gray-100 shrink-0" />
+                        <div className="flex-1 space-y-1.5">
+                          <div className="h-3 w-32 bg-gray-200 rounded" />
+                          <div className="h-2.5 w-48 bg-gray-100 rounded" />
+                        </div>
+                      </div>
+                    ))
+                  ) : alerts.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-gray-400">
+                      No active alerts.
+                    </div>
+                  ) : (
+                    alerts.slice(0, 3).map((alert) => {
                     const matchingVehicle =
                       vehicles.find((v) => v.id === alert.vehicle_id || v.registration_number === alert.vehicle?.registration_number) ||
                       (alert.vehicle ? {
@@ -642,19 +577,20 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
                       </div>
                     </div>
                     );
-                  })}
+                  })
+                )}
                 </div>
               </div>
 
               {/* Review all alerts footer */}
               <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                <a
-                  href="#alerts"
-                  className="text-xs font-medium text-[#11382b] hover:underline flex items-center gap-1"
+                <button
+                  onClick={() => router.push("/alerts")}
+                  className="text-xs font-medium text-[#11382b] hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <span>Review all alerts</span>
                   <span>→</span>
-                </a>
+                </button>
               </div>
             </div>
           </div>
@@ -712,7 +648,18 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 text-xs">
-                  {trips.length === 0 ? (
+                  {isLoading ? (
+                    Array.from({ length: 4 }).map((_, idx) => (
+                      <tr key={idx} className="animate-pulse">
+                        <td className="py-3 px-1"><div className="h-3 w-24 bg-gray-200 rounded" /></td>
+                        <td className="py-3"><div className="h-3 w-20 bg-gray-100 rounded" /></td>
+                        <td className="py-3"><div className="h-3 w-36 bg-gray-100 rounded" /></td>
+                        <td className="py-3"><div className="h-3 w-16 bg-gray-100 rounded" /></td>
+                        <td className="py-3"><div className="h-3 w-14 bg-gray-100 rounded" /></td>
+                        <td className="py-3 text-right"><div className="h-5 w-16 bg-gray-100 rounded-full ml-auto" /></td>
+                      </tr>
+                    ))
+                  ) : trips.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-6 text-center text-xs text-gray-400">
                         No {tripFilter === "all" ? "" : tripFilter} trips recorded.

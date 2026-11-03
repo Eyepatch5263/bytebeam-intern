@@ -32,11 +32,11 @@ export default function VehiclesView({ user }: VehiclesViewProps) {
   const [vehicles, setVehicles] = useState<VehicleItem[]>([]);
   const [drivers, setDrivers] = useState<{ id: string; full_name: string; license_number: string }[]>([]);
   const [metrics, setMetrics] = useState({
-    total: 28,
-    inMotion: 19,
-    parked: 6,
-    attention: 3,
-    inMotionPercentage: 68,
+    total: 0,
+    inMotion: 0,
+    parked: 0,
+    attention: 0,
+    inMotionPercentage: 0,
   });
   const [statusFilter, setStatusFilter] = useState<"all" | "in_trip" | "parked" | "attention">("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -187,7 +187,7 @@ export default function VehiclesView({ user }: VehiclesViewProps) {
 
               {/* Alerts */}
               <button
-                onClick={() => router.push("/#alerts")}
+                onClick={() => router.push("/alerts")}
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
@@ -337,8 +337,14 @@ export default function VehiclesView({ user }: VehiclesViewProps) {
             <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs">
               <span className="text-xs font-medium text-gray-500 block">Fleet size</span>
               <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-bold text-gray-900">{metrics.total}</span>
-                <span className="text-xs text-gray-400">registered vehicles</span>
+                {isLoading ? (
+                  <div className="h-7 w-12 bg-gray-200 rounded animate-pulse" />
+                ) : (
+                  <>
+                    <span className="text-2xl font-bold text-gray-900">{metrics.total}</span>
+                    <span className="text-xs text-gray-400">registered vehicles</span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -346,8 +352,14 @@ export default function VehiclesView({ user }: VehiclesViewProps) {
             <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs">
               <span className="text-xs font-medium text-gray-500 block">In motion</span>
               <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-bold text-gray-900">{metrics.inMotion}</span>
-                <span className="text-xs text-gray-400">{metrics.inMotionPercentage}% of fleet</span>
+                {isLoading ? (
+                  <div className="h-7 w-12 bg-gray-200 rounded animate-pulse" />
+                ) : (
+                  <>
+                    <span className="text-2xl font-bold text-gray-900">{metrics.inMotion}</span>
+                    <span className="text-xs text-gray-400">{metrics.inMotionPercentage}% of fleet</span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -355,8 +367,14 @@ export default function VehiclesView({ user }: VehiclesViewProps) {
             <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs">
               <span className="text-xs font-medium text-gray-500 block">Parked</span>
               <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-bold text-gray-900">{metrics.parked}</span>
-                <span className="text-xs text-gray-400">4 at depot</span>
+                {isLoading ? (
+                  <div className="h-7 w-12 bg-gray-200 rounded animate-pulse" />
+                ) : (
+                  <>
+                    <span className="text-2xl font-bold text-gray-900">{metrics.parked}</span>
+                    <span className="text-xs text-gray-400">vehicles currently parked</span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -364,8 +382,14 @@ export default function VehiclesView({ user }: VehiclesViewProps) {
             <div className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs">
               <span className="text-xs font-medium text-gray-500 block">Attention needed</span>
               <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-bold text-gray-900">{metrics.attention}</span>
-                <span className="text-xs text-gray-400">open alerts</span>
+                {isLoading ? (
+                  <div className="h-7 w-10 bg-gray-200 rounded animate-pulse" />
+                ) : (
+                  <>
+                    <span className="text-2xl font-bold text-gray-900">{metrics.attention}</span>
+                    <span className="text-xs text-gray-400">open alerts</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -468,10 +492,31 @@ export default function VehiclesView({ user }: VehiclesViewProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 text-xs">
-                  {paginatedVehicles.length === 0 ? (
+                  {isLoading ? (
+                    Array.from({ length: 6 }).map((_, idx) => (
+                      <tr key={idx} className="animate-pulse">
+                        <td className="py-3.5 px-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-7 h-7 rounded-lg bg-gray-100 shrink-0" />
+                            <div className="space-y-1.5">
+                              <div className="h-3 w-24 bg-gray-200 rounded" />
+                              <div className="h-2.5 w-32 bg-gray-100 rounded" />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-5"><div className="h-3 w-28 bg-gray-100 rounded" /></td>
+                        <td className="py-3.5 px-5"><div className="h-5 w-16 bg-gray-100 rounded-full" /></td>
+                        <td className="py-3.5 px-5"><div className="h-3 w-32 bg-gray-100 rounded" /></td>
+                        <td className="py-3.5 px-5"><div className="h-3 w-16 bg-gray-100 rounded" /></td>
+                        <td className="py-3.5 px-5"><div className="h-3 w-12 bg-gray-100 rounded" /></td>
+                        <td className="py-3.5 px-5"><div className="h-3 w-16 bg-gray-100 rounded" /></td>
+                        <td className="py-3.5 px-5 text-right"><div className="h-3 w-4 bg-gray-100 rounded ml-auto" /></td>
+                      </tr>
+                    ))
+                  ) : paginatedVehicles.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="py-12 text-center text-xs text-gray-400">
-                        {isLoading ? "Loading fleet vehicles..." : "No vehicles match the selected filter."}
+                        No vehicles match the selected filter.
                       </td>
                     </tr>
                   ) : (

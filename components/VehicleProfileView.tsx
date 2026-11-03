@@ -143,7 +143,7 @@ export default function VehicleProfileView({ vehicleId }: VehicleProfileViewProp
               </button>
 
               <button
-                onClick={() => router.push("/#alerts")}
+                onClick={() => router.push("/alerts")}
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
@@ -247,35 +247,55 @@ export default function VehicleProfileView({ vehicleId }: VehicleProfileViewProp
 
         {/* Content Body */}
         <main className="p-6 sm:p-8 space-y-6 max-w-350 w-full mx-auto">
-          {/* Breadcrumbs & Title */}
-          <div>
-            <span className="text-[10px] font-mono font-medium tracking-[0.2em] text-gray-400 uppercase block">
-              FLEET &nbsp;/&nbsp; VEHICLES &nbsp;/&nbsp; VEHICLE PROFILE
-            </span>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
-              <div className="flex items-center gap-3.5">
-              
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-2xl sm:text-[28px] font-bold text-gray-900 tracking-tight leading-tight">
-                      {vehicle?.registration_number || "KA 03 MN 4821"}
-                    </h1>
-                  </div>
-
-                  <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                    <span className="font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 text-[10px] uppercase tracking-wider">
-                      {isMoving ? "In trip" : isIdle ? "Parked" : "Offline"}
-                    </span>
-                    <span>·</span>
-                    <span>{vehicle?.manufacturer} {vehicle?.model}</span>
-                    <span>·</span>
-                    <span>{vehicle?.driver?.full_name || "Rohan Kumar"}</span>
-                    <span>·</span>
-                    <span className="text-emerald-700 font-medium">Device online</span>
-                  </div>
+          {isLoading ? (
+            <div className="space-y-6 animate-pulse">
+              <div className="space-y-2">
+                <div className="h-2.5 w-36 bg-gray-200 rounded" />
+                <div className="h-8 w-64 bg-gray-200 rounded" />
+                <div className="h-3 w-80 bg-gray-100 rounded" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-gray-50 rounded-xl border border-gray-200/80 p-4 h-20" />
+                ))}
+              </div>
+              <div className="bg-white rounded-2xl border border-gray-200/80 p-6 h-80 flex items-center justify-center">
+                <div className="flex items-center gap-2 text-xs text-gray-400 font-mono">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                  <span>LOADING VEHICLE PROFILE...</span>
                 </div>
               </div>
+            </div>
+          ) : (
+            <>
+              {/* Breadcrumbs & Title */}
+              <div>
+                <span className="text-[10px] font-mono font-medium tracking-[0.2em] text-gray-400 uppercase block">
+                  FLEET &nbsp;/&nbsp; VEHICLES &nbsp;/&nbsp; VEHICLE PROFILE
+                </span>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+                  <div className="flex items-center gap-3.5">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h1 className="text-2xl sm:text-[28px] font-bold text-gray-900 tracking-tight leading-tight">
+                          {vehicle?.registration_number || "Vehicle"}
+                        </h1>
+                      </div>
+
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                        <span className="font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 text-[10px] uppercase tracking-wider">
+                          {isMoving ? "In trip" : isIdle ? "Parked" : "Offline"}
+                        </span>
+                        <span>·</span>
+                        <span>{vehicle?.manufacturer} {vehicle?.model}</span>
+                        <span>·</span>
+                        <span>{vehicle?.driver?.full_name || "Assigned Driver"}</span>
+                        <span>·</span>
+                        <span className="text-emerald-700 font-medium">Device online</span>
+                      </div>
+                    </div>
+                  </div>
 
               {/* Action buttons matching screenshot */}
               <div className="flex items-center gap-2">
@@ -353,13 +373,7 @@ export default function VehicleProfileView({ vehicleId }: VehicleProfileViewProp
           {/* ========================================= */}
           {/* 4. CURRENT TRIP & ROUTE SECTION            */}
           {/* ========================================= */}
-          {isLoading ? (
-            <div className="py-20 text-center">
-              <div className="w-8 h-8 border-2 border-[#11382b] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              <span className="text-xs text-gray-400 font-mono">LOADING VEHICLE TELEMETRY...</span>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
               {/* Left 2/3: Live Route Map */}
               <div className="lg:col-span-2">
                 <TripRouteMap
@@ -495,6 +509,7 @@ export default function VehicleProfileView({ vehicleId }: VehicleProfileViewProp
                 </div>
               </div>
             </div>
+            </>
           )}
         </main>
       </div>
