@@ -2,6 +2,8 @@
 
 ![Product Flow](/public/image.png)
 
+![Product Walkthrough](https://res.cloudinary.com/dvnrlqqpq/video/upload/v1793783997/bytebeam-intern_llcctx.mp4)
+
 
 A focused operational interface for monitoring fleet activity,
 inspecting vehicles and trips, and reviewing operational alerts.
