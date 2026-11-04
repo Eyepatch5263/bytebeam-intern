@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -75,34 +76,45 @@ interface FleetOverviewData {
   trips: FleetTrip[];
 }
 
-export function useFleetVehicle(pollIntervalMs = 30000, initialTripFilter = "all") {
+export function useFleetVehicle(
+  pollIntervalMs = 30000,
+  initialTripFilter = "all"
+) {
   const [data, setData] = useState<FleetOverviewData | null>(null);
   const [tripFilter, setTripFilter] = useState<string>(initialTripFilter);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [secondsAgo, setSecondsAgo] = useState(0);
 
   const fetchFleet = useCallback(
     async (overrideTripFilter?: string) => {
       try {
         const filterToUse = overrideTripFilter ?? tripFilter;
+
         const url =
           filterToUse && filterToUse !== "all"
             ? `/api/fleet/overview?trip_status=${encodeURIComponent(filterToUse)}`
             : "/api/fleet/overview";
 
         const res = await fetch(url);
+
         if (!res.ok) {
           throw new Error(`Failed to load fleet data (${res.status})`);
         }
+
         const json = await res.json();
+
         setData(json);
         setLastSyncTime(new Date());
         setSecondsAgo(0);
         setError(null);
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Error fetching fleet overview";
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Error fetching fleet overview";
+
         setError(message);
       } finally {
         setIsLoading(false);
@@ -111,7 +123,7 @@ export function useFleetVehicle(pollIntervalMs = 30000, initialTripFilter = "all
     [tripFilter]
   );
 
-  // When trip filter changes, immediately fetch
+  // Handle trip filter changes
   const handleSetTripFilter = useCallback(
     (newFilter: string) => {
       setTripFilter(newFilter);
@@ -120,19 +132,33 @@ export function useFleetVehicle(pollIntervalMs = 30000, initialTripFilter = "all
     [fetchFleet]
   );
 
+  // Initial fetch and polling
   useEffect(() => {
     fetchFleet();
 
-    const pollTimer = setInterval(() => fetchFleet(), pollIntervalMs);
-    const ticker = setInterval(() => {
-      setSecondsAgo((prev) => prev + 1);
-    }, 1000);
+    const pollTimer = setInterval(() => {
+      fetchFleet();
+    }, pollIntervalMs);
 
     return () => {
       clearInterval(pollTimer);
-      clearInterval(ticker);
     };
   }, [fetchFleet, pollIntervalMs]);
+
+  // Update elapsed time since last successful synchronization
+  useEffect(() => {
+    if (!lastSyncTime) return;
+
+    const ticker = setInterval(() => {
+      const elapsed = Math.floor(
+        (Date.now() - lastSyncTime.getTime()) / 1000
+      );
+
+      setSecondsAgo(elapsed);
+    }, 1000);
+
+    return () => clearInterval(ticker);
+  }, [lastSyncTime]);
 
   return {
     data,
