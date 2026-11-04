@@ -300,9 +300,6 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
           {/* Header Row: Title & Action Buttons */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <span className="text-[10px] font-mono font-medium tracking-[0.2em] text-gray-400 uppercase block">
-                MONDAY · 02 NOVEMBER 2026 &nbsp;/&nbsp; FIELD RECORD 01
-              </span>
               <h1 className="text-2xl sm:text-[28px] font-bold text-gray-900 tracking-tight mt-0.5">
                 Fleet overview
               </h1>
@@ -311,18 +308,7 @@ export default function DashboardOverview({ user }: DashboardOverviewProps) {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button className="flex items-center gap-1.5 rounded-lg border border-gray-200/90 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-2xs transition-colors cursor-pointer">
-                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>Today, Nov 02</span>
-                <span className="text-gray-400 text-[10px]">▾</span>
-              </button>
-              <button className="rounded-lg border border-gray-200/90 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-2xs transition-colors cursor-pointer">
-                Export report
-              </button>
-            </div>
+            
           </div>
 
           {/* ========================================= */}
