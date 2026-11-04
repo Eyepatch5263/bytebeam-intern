@@ -2,7 +2,7 @@
 
 ![Product Flow](/public/image.png)
 
-![Product Walkthrough](https://res.cloudinary.com/dvnrlqqpq/video/upload/v1793783997/bytebeam-intern_llcctx.mp4)
+[Product Walkthrough](https://res.cloudinary.com/dvnrlqqpq/video/upload/v1793783997/bytebeam-intern_llcctx.mp4)
 
 
 A focused operational interface for monitoring fleet activity,
@@ -466,5 +466,8 @@ AI-generated designs and code were manually reviewed against the product
 requirements and the intended user experience. The output was checked
 for alignment with the application's scope and requirements before being
 incorporated into the project.
+
+Chat logs -> https://chatgpt.com/c/6ae86bd5-d2ac-83ee-8b92-96f57474f64b
+Manus AI Link - https://manus.im/share/dB65nnjtvcIlZQFbw4O5ni
 
 ------------------------------------------------------------------------
