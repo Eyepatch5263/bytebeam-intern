@@ -139,7 +139,7 @@ The application is designed around the following operational workflow.
 
 ## Live Demo
 
--   **Deployed URL:** *Add the deployed application URL here.*
+-   **Deployed URL:** https://bytebeam-intern.vercel.app/
 -   **Demo email:** `demo@support.com`
 -   **Demo password:** `admin123`
 
